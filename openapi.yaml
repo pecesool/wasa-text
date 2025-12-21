@@ -1,0 +1,677 @@
+openapi: 3.0.3
+info:
+  title: WASAText
+  description: Simple messaging app API (WASA project).
+  version: "0.1"
+servers:
+- url: /api
+security:
+- bearerAuth: []
+paths:
+  /session:
+    post:
+      summary: simplified login (create or get user)
+      operationId: doLogin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "201":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security: []
+  /me/name:
+    put:
+      summary: change my username
+      operationId: setMyUserName
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetNameRequest"
+        required: true
+      responses:
+        "204":
+          description: updated
+        "409":
+          description: name already used
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /me/photo:
+    put:
+      summary: set my photo
+      operationId: setMyPhoto
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetPhotoRequest"
+        required: true
+      responses:
+        "204":
+          description: updated
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /conversations:
+    get:
+      summary: list my conversations
+      operationId: getMyConversations
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversations"
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: start direct chat
+      operationId: createDirectConversation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDirectRequest"
+        required: true
+      responses:
+        "201":
+          description: created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/inline_response_201"
+        "404":
+          description: user not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /groups:
+    post:
+      summary: create group chat
+      operationId: createGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupRequest"
+        required: true
+      responses:
+        "201":
+          description: created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/inline_response_201"
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /conversations/{conversationId}:
+    get:
+      summary: get conversation with messages
+      operationId: getConversation
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+        "404":
+          description: not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /conversations/{conversationId}/messages:
+    post:
+      summary: send message
+      operationId: sendMessage
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+        required: true
+      responses:
+        "201":
+          description: created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "400":
+          description: invalid message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /messages/{messageId}:
+    delete:
+      summary: delete my message
+      operationId: deleteMessage
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: deleted
+        "403":
+          description: not sender
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: message not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /messages/{messageId}/forward:
+    post:
+      summary: forward message
+      operationId: forwardMessage
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForwardRequest"
+        required: true
+      responses:
+        "201":
+          description: created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "404":
+          description: not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /messages/{messageId}/comments:
+    post:
+      summary: react to a message
+      operationId: commentMessage
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReactRequest"
+        required: true
+      responses:
+        "201":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/inline_response_201_1"
+        "404":
+          description: message not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /messages/{messageId}/comments/{reactionId}:
+    delete:
+      summary: remove reaction
+      operationId: uncommentMessage
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: reactionId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: deleted
+        "403":
+          description: not author
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /groups/{groupId}/name:
+    put:
+      summary: set group name
+      operationId: setGroupName
+      parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetGroupNameRequest"
+        required: true
+      responses:
+        "204":
+          description: updated
+        "404":
+          description: group not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /groups/{groupId}/photo:
+    put:
+      summary: set group photo
+      operationId: setGroupPhoto
+      parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetPhotoRequest"
+        required: true
+      responses:
+        "204":
+          description: updated
+        "404":
+          description: group not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /groups/{groupId}/members:
+    post:
+      summary: add user to group
+      operationId: addToGroup
+      parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddToGroupRequest"
+        required: true
+      responses:
+        "204":
+          description: added
+        "404":
+          description: group or user not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /groups/{groupId}/leave:
+    post:
+      summary: leave group
+      operationId: leaveGroup
+      parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: left
+        "404":
+          description: group not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    Error:
+      required:
+      - message
+      type: object
+      properties:
+        message:
+          type: string
+    LoginRequest:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          maxLength: 16
+          minLength: 3
+          type: string
+    LoginResponse:
+      required:
+      - identifier
+      type: object
+      properties:
+        identifier:
+          type: string
+    SetNameRequest:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          maxLength: 16
+          minLength: 3
+          type: string
+    SetPhotoRequest:
+      required:
+      - photo
+      type: object
+      properties:
+        photo:
+          type: string
+          description: "Base64 image, empty string to remove"
+    ConversationItem:
+      required:
+      - id
+      - isGroup
+      - lastTime
+      - title
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        isGroup:
+          type: boolean
+        lastTime:
+          type: string
+          format: date-time
+        lastPreview:
+          type: string
+    Conversations:
+      required:
+      - conversations
+      type: object
+      properties:
+        conversations:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConversationItem"
+    Message:
+      required:
+      - delivered
+      - id
+      - read
+      - sender
+      - time
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+        sender:
+          type: string
+        time:
+          type: string
+          format: date-time
+        type:
+          type: string
+          enum:
+          - text
+          - image
+        text:
+          type: string
+        media:
+          type: string
+          description: Base64 image/gif if type=image
+        delivered:
+          type: boolean
+        read:
+          type: boolean
+    Conversation:
+      required:
+      - id
+      - isGroup
+      - members
+      - messages
+      - title
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        isGroup:
+          type: boolean
+        members:
+          type: array
+          items:
+            type: string
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+    CreateDirectRequest:
+      required:
+      - username
+      type: object
+      properties:
+        username:
+          type: string
+    CreateGroupRequest:
+      required:
+      - members
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        members:
+          type: array
+          items:
+            type: string
+    SendMessageRequest:
+      required:
+      - type
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - text
+          - image
+        text:
+          type: string
+        media:
+          type: string
+        replyTo:
+          type: string
+          nullable: true
+    ForwardRequest:
+      required:
+      - conversationId
+      type: object
+      properties:
+        conversationId:
+          type: string
+    ReactRequest:
+      required:
+      - emoji
+      type: object
+      properties:
+        emoji:
+          type: string
+    SetGroupNameRequest:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+    AddToGroupRequest:
+      required:
+      - username
+      type: object
+      properties:
+        username:
+          type: string
+    inline_response_201:
+      required:
+      - conversationId
+      type: object
+      properties:
+        conversationId:
+          type: string
+    inline_response_201_1:
+      required:
+      - reactionId
+      type: object
+      properties:
+        reactionId:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
