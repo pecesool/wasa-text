@@ -1,10 +1,10 @@
 <template>
   <div>
-    <h2>Login (fake)</h2>
-    <p>Type a username (3–16). This creates the user or reuses it.</p>
-
+    <h2>Login</h2>
+    <p>Type a username (3–16)</p>
+    
     <form @submit.prevent="login">
-      <input v-model="name" placeholder="Mario" />
+      <input v-model="name" placeholder="Name" />
       <button type="submit">Login</button>
     </form>
 
@@ -23,6 +23,7 @@ export default {
     async login() {
       this.err = "";
       const n = this.name.trim();
+      localStorage.setItem("wasa_username", n);
       if (n.length < 3 || n.length > 16) {
         this.err = "Name must be 3..16 chars";
         return;

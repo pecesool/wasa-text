@@ -1,3 +1,5 @@
+import SettingsView from "./views/SettingsView.vue";
+import GroupSettingsView from "./views/GroupSettingsView.vue";
 import { createRouter, createWebHistory } from "vue-router";
 import LoginView from "./views/LoginView.vue";
 import ConversationsView from "./views/ConversationsView.vue";
@@ -8,6 +10,9 @@ const routes = [
   { path: "/login", component: LoginView },
   { path: "/conversations", component: ConversationsView },
   { path: "/chat/:id", component: ChatView, props: true },
+  { path: "/settings", component: SettingsView },
+  
+  { path: "/group/:id", component: GroupSettingsView, props: true },
 ];
 
 export default createRouter({

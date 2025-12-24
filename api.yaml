@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.9
 info:
   title: WASAText
   description: Simple messaging app API (WASA project).
@@ -173,6 +173,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /users:
+    get:
+      summary: list all users
+      operationId: listUsers
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      type: string
+                required: [users]
+        "401":
+          description: not logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /conversations/{conversationId}/messages:
     post:
       summary: send message
