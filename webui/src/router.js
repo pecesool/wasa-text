@@ -11,8 +11,8 @@ const routes = [
   { path: "/conversations", component: ConversationsView },
   { path: "/chat/:id", component: ChatView, props: true },
   { path: "/settings", component: SettingsView },
+  {    path: "/groups/:id/settings",    component: () => import("./views/GroupSettingsView.vue"),    props: true,  }
   
-  { path: "/group/:id", component: GroupSettingsView, props: true },
 ];
 
 export default createRouter({

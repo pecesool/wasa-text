@@ -1,23 +1,29 @@
 
-    FROM golang:1.25-alpine AS build
-    WORKDIR /app
-    
-    RUN apk add --no-cache git
-    
- 
-    COPY backend/go.mod backend /
-    RUN go mod download
-    
-   
-    COPY backend/ ./
-    
-  
-    RUN CGO_ENABLED=0 GOOS=linux go build -o webapi ./cmd/webapi
-    
-  
-    FROM alpine:3.20
-    WORKDIR /app
-    COPY --from=build /app/webapi /app/webapi
-    
-    EXPOSE 3000
-    CMD ["/app/webapi"]
+FROM golang:1.25-alpine AS build
+
+WORKDIR /app
+
+
+RUN apk add --no-cache git
+
+
+COPY go.mod ./
+
+COPY cmd ./cmd
+COPY service ./service
+COPY doc ./doc
+
+
+RUN go build -o /bin/webapi ./cmd/webapi
+
+
+FROM alpine:3.20
+WORKDIR /app
+
+
+RUN apk add --no-cache ca-certificates
+
+COPY --from=build /bin/webapi /app/webapi
+
+EXPOSE 3000
+CMD ["/app/webapi"]
