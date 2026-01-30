@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -101,28 +102,39 @@ func (a *API) requireAuth(next func(http.ResponseWriter, *http.Request, string))
 	}
 }
 
+// mapDBErr writes an HTTP error response for known database errors.
+// Returns true if it wrote an error response.
 func mapDBErr(w http.ResponseWriter, err error) bool {
 	if err == nil {
 		return false
 	}
-	switch err {
-	case database.ErrNotLogged:
+
+	switch {
+	case errors.Is(err, database.ErrNotLogged):
 		writeError(w, http.StatusUnauthorized, "not logged")
-	case database.ErrNotFound, database.ErrConversationGone:
+
+	case errors.Is(err, database.ErrNotFound), errors.Is(err, database.ErrConversationGone):
 		writeError(w, http.StatusNotFound, "not found")
-	case database.ErrForbidden:
+
+	case errors.Is(err, database.ErrForbidden):
 		writeError(w, http.StatusForbidden, "forbidden")
-	case database.ErrNameAlreadyUsed:
+
+	case errors.Is(err, database.ErrNameAlreadyUsed):
 		writeError(w, http.StatusConflict, "name already used")
-	case database.ErrInvalid:
+
+	case errors.Is(err, database.ErrInvalid):
 		writeError(w, http.StatusBadRequest, "bad request")
-	case database.ErrUserNotFound:
+
+	case errors.Is(err, database.ErrUserNotFound):
 		writeError(w, http.StatusNotFound, "user not found")
-	case database.ErrNotAGroup:
+
+	case errors.Is(err, database.ErrNotAGroup):
 		writeError(w, http.StatusBadRequest, "not a group")
+
 	default:
 		writeError(w, http.StatusInternalServerError, "internal error")
 	}
+
 	return true
 }
 
@@ -131,6 +143,7 @@ func mapDBErr(w http.ResponseWriter, err error) bool {
 type loginReq struct {
 	Name string `json:"name"`
 }
+
 type loginResp struct {
 	Identifier string `json:"identifier"`
 }
@@ -161,6 +174,8 @@ func (a *API) handleSession(w http.ResponseWriter, r *http.Request) {
 /* -------------------- /users -------------------- */
 
 func (a *API) handleUsers(w http.ResponseWriter, r *http.Request, tok string) {
+	_ = tok
+
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
