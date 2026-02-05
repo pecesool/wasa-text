@@ -194,10 +194,10 @@ components:
           maxLength: 16
         delivered:
           type: boolean
-          description: For sent messages: delivered to all recipients.
+          description: For sent messages delivered to all recipients.
         read:
           type: boolean
-          description: For sent messages: read by all recipients.
+          description: For sent messages read by all recipients.
         reactions:
           type: array
           description: Reactions on the message.
