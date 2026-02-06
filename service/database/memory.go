@@ -10,21 +10,22 @@ import (
 )
 
 var (
-	ErrNotLogged       = errorString("not logged")
-	ErrNotFound        = errorString("not found")
-	ErrForbidden       = errorString("forbidden")
-	ErrInvalid         = errorString("invalid")
-	ErrNameAlreadyUsed = errorString("name already used")
-	ErrUserNotFound    = errorString("user not found")
-	ErrNotAGroup       = errorString("not a group")
+	ErrNotLogged       = memoryError("not logged")
+	ErrNotFound        = memoryError("not found")
+	ErrForbidden       = memoryError("forbidden")
+	ErrInvalid         = memoryError("invalid")
+	ErrNameAlreadyUsed = memoryError("name already used")
+	ErrUserNotFound    = memoryError("user not found")
+	ErrNotAGroup       = memoryError("not a group")
 
 	// used by API mapping (some graders expect different errors for "gone")
-	ErrConversationGone = errorString("conversation gone")
+	ErrConversationGone = memoryError("conversation gone")
 )
 
-type errorString string
+type memoryError string
 
-func (e errorString) Error() string { return string(e) }
+func (e memoryError) Error() string { return string(e) }
+
 
 type User struct {
 	Name  string
@@ -164,13 +165,7 @@ func isMember(c *conversation, username string) bool {
 	return false
 }
 
-func (db *InMemory) mustUser(token string) (*User, error) {
-	u, ok := db.usersByToken[token]
-	if !ok {
-		return nil, ErrNotLogged
-	}
-	return u, nil
-}
+
 
 /* -------------------- session/users -------------------- */
 
