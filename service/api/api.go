@@ -28,24 +28,30 @@ func New(deps Dependencies) *API {
 }
 
 func (a *API) RegisterRoutes(mux *http.ServeMux) {
-	// Simplified login
-	mux.HandleFunc("/api/session", a.handleSession)
+	register := func(base string) {
+		// Simplified login
+		mux.HandleFunc(base+"/session", a.handleSession)
 
-	// Users list (for UI dropdown)
-	mux.HandleFunc("/api/users", a.requireAuth(a.handleUsers))
+		// Users list (for UI dropdown)
+		mux.HandleFunc(base+"/users", a.requireAuth(a.handleUsers))
 
-	// Profile
-	mux.HandleFunc("/api/me/name", a.requireAuth(a.handleMeName))
-	mux.HandleFunc("/api/me/photo", a.requireAuth(a.handleMePhoto))
+		// Profile
+		mux.HandleFunc(base+"/me/name", a.requireAuth(a.handleMeName))
+		mux.HandleFunc(base+"/me/photo", a.requireAuth(a.handleMePhoto))
 
-	// Conversations / groups
-	mux.HandleFunc("/api/conversations", a.requireAuth(a.handleConversations))
-	mux.HandleFunc("/api/groups", a.requireAuth(a.handleGroups))
+		// Conversations / groups
+		mux.HandleFunc(base+"/conversations", a.requireAuth(a.handleConversations))
+		mux.HandleFunc(base+"/groups", a.requireAuth(a.handleGroups))
 
-	// Dynamic routes (manual parsing)
-	mux.HandleFunc("/api/conversations/", a.requireAuth(a.handleConversationsDynamic))
-	mux.HandleFunc("/api/messages/", a.requireAuth(a.handleMessagesDynamic))
-	mux.HandleFunc("/api/groups/", a.requireAuth(a.handleGroupsDynamic))
+		// Dynamic routes (manual parsing)
+		mux.HandleFunc(base+"/conversations/", a.requireAuth(a.handleConversationsDynamic))
+		mux.HandleFunc(base+"/messages/", a.requireAuth(a.handleMessagesDynamic))
+		mux.HandleFunc(base+"/groups/", a.requireAuth(a.handleGroupsDynamic))
+	}
+
+	// register BOTH variants: with /api and without
+	register("")
+	register("/api")
 }
 
 /* -------------------- common helpers -------------------- */
@@ -301,12 +307,17 @@ func (a *API) handleConversationsDynamic(w http.ResponseWriter, r *http.Request,
 	// Path:
 	// /api/conversations/{conversationId}
 	// /api/conversations/{conversationId}/messages
-	path := strings.TrimPrefix(r.URL.Path, "/api/conversations/")
+	// /conversations/{conversationId}
+	// /conversations/{conversationId}/messages
+	path := r.URL.Path
+	path = strings.TrimPrefix(path, "/api/conversations/")
+	path = strings.TrimPrefix(path, "/conversations/")
 	path = strings.Trim(path, "/")
 	if path == "" {
 		writeError(w, http.StatusNotFound, "not found")
 		return
 	}
+
 
 	parts := strings.Split(path, "/")
 	cid := parts[0]
@@ -361,8 +372,11 @@ func (a *API) handleMessagesDynamic(w http.ResponseWriter, r *http.Request, tok 
 	// /api/messages/{messageId}/forward
 	// /api/messages/{messageId}/comments
 	// /api/messages/{messageId}/comments/{reactionId}
-	path := strings.TrimPrefix(r.URL.Path, "/api/messages/")
+	path := r.URL.Path
+	path = strings.TrimPrefix(path, "/api/messages/")
+	path = strings.TrimPrefix(path, "/messages/")
 	path = strings.Trim(path, "/")
+
 	if path == "" {
 		writeError(w, http.StatusNotFound, "not found")
 		return
@@ -453,7 +467,9 @@ func (a *API) handleGroupsDynamic(w http.ResponseWriter, r *http.Request, tok st
 	// /api/groups/{groupId}/photo
 	// /api/groups/{groupId}/members
 	// /api/groups/{groupId}/leave
-	path := strings.TrimPrefix(r.URL.Path, "/api/groups/")
+	path := r.URL.Path
+	path = strings.TrimPrefix(path, "/api/groups/")
+	path = strings.TrimPrefix(path, "/groups/")
 	path = strings.Trim(path, "/")
 	if path == "" {
 		writeError(w, http.StatusNotFound, "not found")
