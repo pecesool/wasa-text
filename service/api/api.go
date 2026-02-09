@@ -318,7 +318,6 @@ func (a *API) handleConversationsDynamic(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-
 	parts := strings.Split(path, "/")
 	cid := parts[0]
 

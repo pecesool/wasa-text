@@ -26,7 +26,6 @@ type memoryError string
 
 func (e memoryError) Error() string { return string(e) }
 
-
 type User struct {
 	Name  string
 	Token string
@@ -164,8 +163,6 @@ func isMember(c *conversation, username string) bool {
 	}
 	return false
 }
-
-
 
 /* -------------------- session/users -------------------- */
 
