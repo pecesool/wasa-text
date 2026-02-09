@@ -49,7 +49,7 @@ func (a *API) RegisterRoutes(mux *http.ServeMux) {
 		mux.HandleFunc(base+"/groups/", a.requireAuth(a.handleGroupsDynamic))
 	}
 
-	// register BOTH variants: with /api and without
+	// Register BOTH variants: with /api and without
 	register("")
 	register("/api")
 }
@@ -322,7 +322,7 @@ func (a *API) handleConversationsDynamic(w http.ResponseWriter, r *http.Request,
 	cid := parts[0]
 
 	if len(parts) == 1 {
-		// /api/conversations/{cid}
+		// /conversations/{cid}
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -337,7 +337,7 @@ func (a *API) handleConversationsDynamic(w http.ResponseWriter, r *http.Request,
 	}
 
 	if len(parts) == 2 && parts[1] == "messages" {
-		// /api/conversations/{cid}/messages
+		// /conversations/{cid}/messages
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -371,6 +371,7 @@ func (a *API) handleMessagesDynamic(w http.ResponseWriter, r *http.Request, tok 
 	// /api/messages/{messageId}/forward
 	// /api/messages/{messageId}/comments
 	// /api/messages/{messageId}/comments/{reactionId}
+	// /messages/{messageId} ...
 	path := r.URL.Path
 	path = strings.TrimPrefix(path, "/api/messages/")
 	path = strings.TrimPrefix(path, "/messages/")
@@ -383,7 +384,7 @@ func (a *API) handleMessagesDynamic(w http.ResponseWriter, r *http.Request, tok 
 	parts := strings.Split(path, "/")
 	mid := parts[0]
 
-	// /api/messages/{mid}
+	// /messages/{mid}
 	if len(parts) == 1 {
 		if r.Method != http.MethodDelete {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -397,7 +398,7 @@ func (a *API) handleMessagesDynamic(w http.ResponseWriter, r *http.Request, tok 
 		return
 	}
 
-	// /api/messages/{mid}/forward
+	// /messages/{mid}/forward
 	if len(parts) == 2 && parts[1] == "forward" {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -419,7 +420,7 @@ func (a *API) handleMessagesDynamic(w http.ResponseWriter, r *http.Request, tok 
 		return
 	}
 
-	// /api/messages/{mid}/comments
+	// /messages/{mid}/comments
 	if len(parts) == 2 && parts[1] == "comments" {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -441,7 +442,7 @@ func (a *API) handleMessagesDynamic(w http.ResponseWriter, r *http.Request, tok 
 		return
 	}
 
-	// /api/messages/{mid}/comments/{reactionId}
+	// /messages/{mid}/comments/{reactionId}
 	if len(parts) == 3 && parts[1] == "comments" {
 		if r.Method != http.MethodDelete {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -466,6 +467,7 @@ func (a *API) handleGroupsDynamic(w http.ResponseWriter, r *http.Request, tok st
 	// /api/groups/{groupId}/photo
 	// /api/groups/{groupId}/members
 	// /api/groups/{groupId}/leave
+	// /groups/{groupId}/...
 	path := r.URL.Path
 	path = strings.TrimPrefix(path, "/api/groups/")
 	path = strings.TrimPrefix(path, "/groups/")
