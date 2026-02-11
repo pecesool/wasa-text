@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
-
 	"wasa-text/service/api"
 	"wasa-text/service/database"
 	"wasa-text/service/globaltime"
@@ -26,13 +26,29 @@ func main() {
 		Clock: clk,
 	})
 
-	mux := http.NewServeMux()
+	apiHandler := a.Handler()
 
-	a.RegisterRoutes(mux)
+	webMux := http.NewServeMux()
+	registerWebUI(webMux)
 
-	registerWebUI(mux)
+	handler := withCORS(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		p := r.URL.Path
 
-	handler := withCORS(mux)
+		// API routes (support both /api/* and legacy without /api)
+		if strings.HasPrefix(p, "/api/") ||
+			p == "/session" ||
+			p == "/users" ||
+			strings.HasPrefix(p, "/me/") ||
+			strings.HasPrefix(p, "/conversations") ||
+			strings.HasPrefix(p, "/messages") ||
+			strings.HasPrefix(p, "/groups") {
+			apiHandler.ServeHTTP(w, r)
+			return
+		}
+
+		// Everything else = Web UI / static
+		webMux.ServeHTTP(w, r)
+	}))
 
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,
