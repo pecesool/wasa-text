@@ -6,48 +6,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// Markers for static OpenAPI checkers that look for "{param}" patterns in code.
-// These do not affect runtime routing. They only help static analyzers compare
-// OpenAPI paths with source code.
-const (
-	openAPISession                  = "/session"
-	openAPIUsers                    = "/users"
-	openAPIMeName                   = "/me/name"
-	openAPIMePhoto                  = "/me/photo"
-	openAPIConversations            = "/conversations"
-	openAPIGroups                   = "/groups"
-	openAPIConversationByID         = "/conversations/{conversationId}"
-	openAPIConversationMessages     = "/conversations/{conversationId}/messages"
-	openAPIMessageByID              = "/messages/{messageId}"
-	openAPIMessageForward           = "/messages/{messageId}/forward"
-	openAPIMessageComments          = "/messages/{messageId}/comments"
-	openAPIMessageCommentByReaction = "/messages/{messageId}/comments/{reactionId}"
-	openAPIGroupName                = "/groups/{groupId}/name"
-	openAPIGroupPhoto               = "/groups/{groupId}/photo"
-	openAPIGroupMembers             = "/groups/{groupId}/members"
-	openAPIGroupLeave               = "/groups/{groupId}/leave"
-)
-
-// Mark constants as used without affecting runtime.
-var _ = []string{
-	openAPISession,
-	openAPIUsers,
-	openAPIMeName,
-	openAPIMePhoto,
-	openAPIConversations,
-	openAPIGroups,
-	openAPIConversationByID,
-	openAPIConversationMessages,
-	openAPIMessageByID,
-	openAPIMessageForward,
-	openAPIMessageComments,
-	openAPIMessageCommentByReaction,
-	openAPIGroupName,
-	openAPIGroupPhoto,
-	openAPIGroupMembers,
-	openAPIGroupLeave,
-}
-
 func (a *API) Handler() http.Handler {
 	rt := httprouter.New()
 	r := &_router{api: a, router: rt}
@@ -61,39 +19,51 @@ type _router struct {
 }
 
 func (r *_router) register() {
-	r.registerBase("")
-	r.registerBase("/api")
-}
+	// without /api
+	r.router.POST("/session", r.doLogin)
+	r.router.GET("/users", r.auth(r.listUsers))
 
-func (r *_router) registerBase(base string) {
-	// Session
-	r.router.POST(base+"/session", r.doLogin)
+	r.router.PUT("/me/name", r.auth(r.setMyUserName))
+	r.router.PUT("/me/photo", r.auth(r.setMyPhoto))
 
-	// Users
-	r.router.GET(base+"/users", r.auth(r.listUsers))
+	r.router.GET("/conversations", r.auth(r.getMyConversations))
+	r.router.POST("/conversations", r.auth(r.createDirectConversation))
+	r.router.GET("/conversations/:conversationId", r.authParams(r.getConversation))
+	r.router.POST("/conversations/:conversationId/messages", r.authParams(r.sendMessage))
 
-	// Me
-	r.router.PUT(base+"/me/name", r.auth(r.setMyUserName))
-	r.router.PUT(base+"/me/photo", r.auth(r.setMyPhoto))
+	r.router.POST("/groups", r.auth(r.createGroup))
+	r.router.PUT("/groups/:groupId/name", r.authParams(r.setGroupName))
+	r.router.PUT("/groups/:groupId/photo", r.authParams(r.setGroupPhoto))
+	r.router.POST("/groups/:groupId/members", r.authParams(r.addToGroup))
+	r.router.POST("/groups/:groupId/leave", r.authParams(r.leaveGroup))
 
-	// Conversations
-	r.router.GET(base+"/conversations", r.auth(r.getMyConversations))
-	r.router.POST(base+"/conversations", r.auth(r.createDirectConversation))
-	r.router.GET(base+"/conversations/:conversationId", r.authParams(r.getConversation))
-	r.router.POST(base+"/conversations/:conversationId/messages", r.authParams(r.sendMessage))
+	r.router.DELETE("/messages/:messageId", r.authParams(r.deleteMessage))
+	r.router.POST("/messages/:messageId/forward", r.authParams(r.forwardMessage))
+	r.router.POST("/messages/:messageId/comments", r.authParams(r.commentMessage))
+	r.router.DELETE("/messages/:messageId/comments/:reactionId", r.authParams(r.uncommentMessage))
 
-	// Groups
-	r.router.POST(base+"/groups", r.auth(r.createGroup))
-	r.router.PUT(base+"/groups/:groupId/name", r.authParams(r.setGroupName))
-	r.router.PUT(base+"/groups/:groupId/photo", r.authParams(r.setGroupPhoto))
-	r.router.POST(base+"/groups/:groupId/members", r.authParams(r.addToGroup))
-	r.router.POST(base+"/groups/:groupId/leave", r.authParams(r.leaveGroup))
+	// with /api
+	r.router.POST("/api/session", r.doLogin)
+	r.router.GET("/api/users", r.auth(r.listUsers))
 
-	// Messages
-	r.router.DELETE(base+"/messages/:messageId", r.authParams(r.deleteMessage))
-	r.router.POST(base+"/messages/:messageId/forward", r.authParams(r.forwardMessage))
-	r.router.POST(base+"/messages/:messageId/comments", r.authParams(r.commentMessage))
-	r.router.DELETE(base+"/messages/:messageId/comments/:reactionId", r.authParams(r.uncommentMessage))
+	r.router.PUT("/api/me/name", r.auth(r.setMyUserName))
+	r.router.PUT("/api/me/photo", r.auth(r.setMyPhoto))
+
+	r.router.GET("/api/conversations", r.auth(r.getMyConversations))
+	r.router.POST("/api/conversations", r.auth(r.createDirectConversation))
+	r.router.GET("/api/conversations/:conversationId", r.authParams(r.getConversation))
+	r.router.POST("/api/conversations/:conversationId/messages", r.authParams(r.sendMessage))
+
+	r.router.POST("/api/groups", r.auth(r.createGroup))
+	r.router.PUT("/api/groups/:groupId/name", r.authParams(r.setGroupName))
+	r.router.PUT("/api/groups/:groupId/photo", r.authParams(r.setGroupPhoto))
+	r.router.POST("/api/groups/:groupId/members", r.authParams(r.addToGroup))
+	r.router.POST("/api/groups/:groupId/leave", r.authParams(r.leaveGroup))
+
+	r.router.DELETE("/api/messages/:messageId", r.authParams(r.deleteMessage))
+	r.router.POST("/api/messages/:messageId/forward", r.authParams(r.forwardMessage))
+	r.router.POST("/api/messages/:messageId/comments", r.authParams(r.commentMessage))
+	r.router.DELETE("/api/messages/:messageId/comments/:reactionId", r.authParams(r.uncommentMessage))
 }
 
 func (r *_router) auth(h func(http.ResponseWriter, *http.Request, string)) httprouter.Handle {
@@ -163,60 +133,100 @@ func (r *_router) createGroup(w http.ResponseWriter, req *http.Request, tok stri
 
 // operationId: getConversation
 func (r *_router) getConversation(w http.ResponseWriter, req *http.Request, ps httprouter.Params, tok string) {
-	req.URL.Path = "/conversations/" + ps.ByName("conversationId")
+	p := "/conversations/" + ps.ByName("conversationId")
+	if len(req.URL.Path) >= 5 && req.URL.Path[:5] == "/api/" {
+		p = "/api" + p
+	}
+	req.URL.Path = p
 	r.api.handleConversationsDynamic(w, req, tok)
 }
 
 // operationId: sendMessage
 func (r *_router) sendMessage(w http.ResponseWriter, req *http.Request, ps httprouter.Params, tok string) {
-	req.URL.Path = "/conversations/" + ps.ByName("conversationId") + "/messages"
+	p := "/conversations/" + ps.ByName("conversationId") + "/messages"
+	if len(req.URL.Path) >= 5 && req.URL.Path[:5] == "/api/" {
+		p = "/api" + p
+	}
+	req.URL.Path = p
 	r.api.handleConversationsDynamic(w, req, tok)
 }
 
 // operationId: deleteMessage
 func (r *_router) deleteMessage(w http.ResponseWriter, req *http.Request, ps httprouter.Params, tok string) {
-	req.URL.Path = "/messages/" + ps.ByName("messageId")
+	p := "/messages/" + ps.ByName("messageId")
+	if len(req.URL.Path) >= 5 && req.URL.Path[:5] == "/api/" {
+		p = "/api" + p
+	}
+	req.URL.Path = p
 	r.api.handleMessagesDynamic(w, req, tok)
 }
 
 // operationId: forwardMessage
 func (r *_router) forwardMessage(w http.ResponseWriter, req *http.Request, ps httprouter.Params, tok string) {
-	req.URL.Path = "/messages/" + ps.ByName("messageId") + "/forward"
+	p := "/messages/" + ps.ByName("messageId") + "/forward"
+	if len(req.URL.Path) >= 5 && req.URL.Path[:5] == "/api/" {
+		p = "/api" + p
+	}
+	req.URL.Path = p
 	r.api.handleMessagesDynamic(w, req, tok)
 }
 
 // operationId: commentMessage
 func (r *_router) commentMessage(w http.ResponseWriter, req *http.Request, ps httprouter.Params, tok string) {
-	req.URL.Path = "/messages/" + ps.ByName("messageId") + "/comments"
+	p := "/messages/" + ps.ByName("messageId") + "/comments"
+	if len(req.URL.Path) >= 5 && req.URL.Path[:5] == "/api/" {
+		p = "/api" + p
+	}
+	req.URL.Path = p
 	r.api.handleMessagesDynamic(w, req, tok)
 }
 
 // operationId: uncommentMessage
 func (r *_router) uncommentMessage(w http.ResponseWriter, req *http.Request, ps httprouter.Params, tok string) {
-	req.URL.Path = "/messages/" + ps.ByName("messageId") + "/comments/" + ps.ByName("reactionId")
+	p := "/messages/" + ps.ByName("messageId") + "/comments/" + ps.ByName("reactionId")
+	if len(req.URL.Path) >= 5 && req.URL.Path[:5] == "/api/" {
+		p = "/api" + p
+	}
+	req.URL.Path = p
 	r.api.handleMessagesDynamic(w, req, tok)
 }
 
 // operationId: setGroupName
 func (r *_router) setGroupName(w http.ResponseWriter, req *http.Request, ps httprouter.Params, tok string) {
-	req.URL.Path = "/groups/" + ps.ByName("groupId") + "/name"
+	p := "/groups/" + ps.ByName("groupId") + "/name"
+	if len(req.URL.Path) >= 5 && req.URL.Path[:5] == "/api/" {
+		p = "/api" + p
+	}
+	req.URL.Path = p
 	r.api.handleGroupsDynamic(w, req, tok)
 }
 
 // operationId: setGroupPhoto
 func (r *_router) setGroupPhoto(w http.ResponseWriter, req *http.Request, ps httprouter.Params, tok string) {
-	req.URL.Path = "/groups/" + ps.ByName("groupId") + "/photo"
+	p := "/groups/" + ps.ByName("groupId") + "/photo"
+	if len(req.URL.Path) >= 5 && req.URL.Path[:5] == "/api/" {
+		p = "/api" + p
+	}
+	req.URL.Path = p
 	r.api.handleGroupsDynamic(w, req, tok)
 }
 
 // operationId: addToGroup
 func (r *_router) addToGroup(w http.ResponseWriter, req *http.Request, ps httprouter.Params, tok string) {
-	req.URL.Path = "/groups/" + ps.ByName("groupId") + "/members"
+	p := "/groups/" + ps.ByName("groupId") + "/members"
+	if len(req.URL.Path) >= 5 && req.URL.Path[:5] == "/api/" {
+		p = "/api" + p
+	}
+	req.URL.Path = p
 	r.api.handleGroupsDynamic(w, req, tok)
 }
 
 // operationId: leaveGroup
 func (r *_router) leaveGroup(w http.ResponseWriter, req *http.Request, ps httprouter.Params, tok string) {
-	req.URL.Path = "/groups/" + ps.ByName("groupId") + "/leave"
+	p := "/groups/" + ps.ByName("groupId") + "/leave"
+	if len(req.URL.Path) >= 5 && req.URL.Path[:5] == "/api/" {
+		p = "/api" + p
+	}
+	req.URL.Path = p
 	r.api.handleGroupsDynamic(w, req, tok)
 }
